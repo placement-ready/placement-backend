@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { config } from "./config";
 import { authRoutes } from "./routes/auth.routes";
+import { googleRoutes } from "./routes/google.routes";
 import { requestLogger } from "./middleware";
 
 // Load environment variables
@@ -22,6 +23,7 @@ app.use(requestLogger);
 
 // API routes
 app.use("/api/auth", authRoutes());
+app.use("/api/google", googleRoutes());
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {

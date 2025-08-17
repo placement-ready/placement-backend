@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { User, SessionModel, VerificationTokenModel } from "../models";
+import { User, Account, SessionModel, VerificationTokenModel } from "../models";
 import { JwtUtils } from "../utils/jwt";
 import { sendVerificationEmail } from "../utils/mailClient";
 
@@ -61,6 +61,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 		};
 
 		const { accessToken, refreshToken } = JwtUtils.generateTokenPair(tokenPayload);
+
+		const account = new Account({
+			userId: user._id,
+			provider: "credentials",
+			accessToken,
+			refreshToken,
+		});
+		await account.save();
 
 		// Save refresh token to database
 		const session = new SessionModel({
