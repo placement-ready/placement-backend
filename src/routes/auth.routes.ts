@@ -8,6 +8,8 @@ import {
 	getProfile,
 	checkEmailExists,
 	checkEmailVerification,
+	createVerificationToken,
+	verifyEmail,
 } from "../controllers/auth.controller";
 import { authenticateToken } from "../middleware/auth";
 import { ValidationUtils, authValidationRules } from "../utils/validation";
@@ -20,6 +22,8 @@ const authRoutes = () => {
 	router.post("/login", ValidationUtils.validateRequest(authValidationRules.login), login);
 	router.post("/refresh-token", ValidationUtils.validateRequest(authValidationRules.refreshToken), refreshToken);
 	router.post("/logout", ValidationUtils.validateRequest(authValidationRules.refreshToken), logout);
+	router.post("/verify-email", verifyEmail);
+	router.post("/create-verification-token", createVerificationToken);
 
 	// Utility routes
 	router.get("/check-email/:email", checkEmailExists);
