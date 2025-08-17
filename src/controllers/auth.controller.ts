@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { User, SessionModel } from "../models";
+import { User, SessionModel, VerificationTokenModel } from "../models";
 import { JwtUtils } from "../utils/jwt";
+import { sendVerificationEmail } from "../utils/mailClient";
 
 interface RegisterRequest {
 	username?: string;
@@ -45,7 +46,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 			email,
 			password,
 			role,
-			loginMethods: ["credentials"],
+			loginMethod: "credentials",
 			isBlocked: false,
 			isDeleted: false,
 		});
@@ -345,6 +346,72 @@ export const checkEmailVerification = async (req: Request, res: Response) => {
 		}
 		const user = await User.findOne({ email, emailVerified: null });
 		res.json({ verified: user === null });
+	} catch (error: any) {
+		res.status(500).json({ error: error.message });
+	}
+};
+
+export const createVerificationToken = async (req: Request, res: Response) => {
+	try {
+		const email = req.body.email;
+		if (!email) {
+			res.status(400).json({ error: "Email is required" });
+			return;
+		}
+
+		const user = await User.findOne({ email });
+		if (!user) {
+			res.status(404).json({ error: "User not found" });
+			return;
+		}
+
+		// Create a verification token
+		const token = new VerificationTokenModel({
+			userId: user._id,
+			code: Math.floor(100000 + Math.random() * 900000).toString(),
+			expiresAt: new Date(Date.now() + 3600000 * 24), // 1 day expiration
+		});
+		await token.save();
+
+		// Send verification email
+		await sendVerificationEmail(user.email, token.code);
+
+		res.status(200).json({ message: "Verification email sent" });
+	} catch (error: any) {
+		res.status(500).json({ error: error.message });
+	}
+};
+
+export const verifyEmail = async (req: Request, res: Response) => {
+	try {
+		const { email, code } = req.body.data;
+		if (!email || !code) {
+			res.status(400).json({ error: "Email and code are required" });
+			return;
+		}
+
+		const user = await User.findOne({ email });
+		if (!user) {
+			res.status(404).json({ error: "User not found" });
+			return;
+		}
+
+		const isValidToken = await VerificationTokenModel.findOne({ userId: user._id, code });
+		if (!isValidToken) {
+			res.status(400).json({ error: "Invalid code" });
+			return;
+		}
+
+		if (isValidToken.expiresAt < new Date(Date.now())) {
+			res.status(400).json({ error: "Code has expired" });
+			return;
+		}
+
+		user.emailVerified = new Date();
+		await user.save();
+		await VerificationTokenModel.deleteOne({ userId: user._id, code });
+
+		res.status(200).json({ message: "Email verified successfully", success: true });
 	} catch (error: any) {
 		res.status(500).json({ error: error.message });
 	}

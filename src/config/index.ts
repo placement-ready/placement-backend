@@ -1,4 +1,6 @@
 import { CorsOptions } from "cors";
+import dotenv from "dotenv";
+dotenv.config();
 
 interface ServerConfig {
 	port: number | string;
@@ -21,12 +23,18 @@ interface DatabaseConfig {
 	uri: string;
 }
 
+interface MailProviderConfig {
+	apiKey: string;
+	from: string;
+}
+
 interface AppConfig {
 	server: ServerConfig;
 	cors: CorsOptions;
 	api: ApiConfig;
 	jwt: JwtConfig;
 	database: DatabaseConfig;
+	mail: MailProviderConfig;
 }
 
 export const config: AppConfig = {
@@ -52,8 +60,7 @@ export const config: AppConfig = {
 	// JWT configuration
 	jwt: {
 		secret: process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production",
-		refreshSecret:
-			process.env.JWT_REFRESH_SECRET || "your-super-secret-refresh-key-change-in-production",
+		refreshSecret: process.env.JWT_REFRESH_SECRET || "your-super-secret-refresh-key-change-in-production",
 		expiresIn: process.env.JWT_EXPIRES_IN || "15m",
 		refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
 	},
@@ -61,6 +68,12 @@ export const config: AppConfig = {
 	// Database configuration
 	database: {
 		uri: process.env.MONGODB_URI || "mongodb://localhost:27017/placement-db",
+	},
+
+	// Mail provider configuration
+	mail: {
+		apiKey: process.env.RESEND_API_KEY || "",
+		from: process.env.EMAIL_FROM || "",
 	},
 };
 

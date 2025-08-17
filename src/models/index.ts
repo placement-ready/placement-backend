@@ -121,7 +121,7 @@ export { SessionModel };
 
 interface IVerificationToken extends mongoose.Document {
 	userId: mongoose.Types.ObjectId;
-	token: string;
+	code: string;
 	expiresAt: Date;
 	type: "email_verification" | "passwordReset";
 }
@@ -129,7 +129,7 @@ interface IVerificationToken extends mongoose.Document {
 const verificationTokenSchema = new Schema<IVerificationToken>(
 	{
 		userId: { type: Schema.Types.ObjectId, ref: "User" },
-		token: String,
+		code: String,
 		expiresAt: Date,
 		type: { type: String, enum: ["emailVerification", "passwordReset"] },
 	},

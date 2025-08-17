@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { config } from "./config";
 import { authRoutes } from "./routes/auth.routes";
+import { requestLogger } from "./middleware";
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,7 @@ app.use("/api/health", async (req, res) => {
 app.use(cors(config.cors));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
 
 // API routes
 app.use("/api/auth", authRoutes());
