@@ -133,3 +133,6 @@ dist
 ### Node Patch ###
 # Serverless Webpack directories
 .webpack/
+
+# IDE
+.vscode/

@@ -10,10 +10,23 @@ interface ApiConfig {
 	version: string;
 }
 
+interface JwtConfig {
+	secret: string;
+	refreshSecret: string;
+	expiresIn: string;
+	refreshExpiresIn: string;
+}
+
+interface DatabaseConfig {
+	uri: string;
+}
+
 interface AppConfig {
 	server: ServerConfig;
 	cors: CorsOptions;
 	api: ApiConfig;
+	jwt: JwtConfig;
+	database: DatabaseConfig;
 }
 
 export const config: AppConfig = {
@@ -34,6 +47,20 @@ export const config: AppConfig = {
 	api: {
 		prefix: "/api",
 		version: "v1",
+	},
+
+	// JWT configuration
+	jwt: {
+		secret: process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production",
+		refreshSecret:
+			process.env.JWT_REFRESH_SECRET || "your-super-secret-refresh-key-change-in-production",
+		expiresIn: process.env.JWT_EXPIRES_IN || "15m",
+		refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+	},
+
+	// Database configuration
+	database: {
+		uri: process.env.MONGODB_URI || "mongodb://localhost:27017/placement-db",
 	},
 };
 
