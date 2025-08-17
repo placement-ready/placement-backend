@@ -3,71 +3,42 @@ import bcryptjs from "bcryptjs";
 
 const Schema = mongoose.Schema;
 
-const userSchema = new Schema(
+// User Schema
+interface IUser extends mongoose.Document {
+	_id: mongoose.Types.ObjectId;
+	name?: string;
+	email: string;
+	password: string;
+	profileImage?: string;
+	role: "student" | "admin" | "recruiter";
+	loginMethod: "google" | "credentials";
+	emailVerified?: Date;
+	lastLoginAt?: Date;
+	isBlocked: boolean;
+	isDeleted: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+	comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUser>(
 	{
-		_id: Schema.Types.ObjectId,
+		_id: { type: Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
 		name: String,
-		email: String,
-		password: String,
+		email: { type: String, required: true, unique: true },
+		password: { type: String, required: true },
 		profileImage: String,
-		role: String, // "student" | "admin" | "recruiter"
-		loginMethods: [String], // ["google", "credentials"]
+		role: { type: String, enum: ["student", "admin", "recruiter"], default: "student" },
+		loginMethod: { type: String, enum: ["google", "credentials"] },
 		emailVerified: Date,
 		lastLoginAt: Date,
-		isBlocked: Boolean,
+		isBlocked: { type: Boolean, default: false },
+		isDeleted: { type: Boolean, default: false },
 	},
 	{
 		timestamps: true,
 	}
 );
-
-const User = mongoose.model("User", userSchema);
-export { User };
-
-const accountSchema = new Schema(
-	{
-		userId: { type: Schema.Types.ObjectId, ref: "User" },
-		provider: String, // "google", "linkedin"
-		providerId: String, // OAuth profile ID
-		accessToken: String,
-		refreshToken: String,
-	},
-	{
-		timestamps: true,
-	}
-);
-
-const Account = mongoose.model("Account", accountSchema);
-export { Account };
-
-const Session = new Schema(
-	{
-		userId: { type: Schema.Types.ObjectId, ref: "User" },
-		refreshToken: String,
-		expiresAt: Date,
-	},
-	{
-		timestamps: true,
-	}
-);
-
-const SessionModel = mongoose.model("Session", Session);
-export { SessionModel };
-
-const verificationTokenSchema = new Schema(
-	{
-		userId: { type: Schema.Types.ObjectId, ref: "User" },
-		token: String,
-		expiresAt: Date,
-		type: String, // "email_verification" | "passwordReset"
-	},
-	{
-		timestamps: true,
-	}
-);
-
-const VerificationTokenModel = mongoose.model("VerificationToken", verificationTokenSchema);
-export { VerificationTokenModel };
 
 // Pre/Post Hooks
 userSchema.pre("save", async function (next): Promise<void> {
@@ -92,3 +63,80 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 		throw new Error("Password comparison failed");
 	}
 };
+
+const User = mongoose.model<IUser>("User", userSchema);
+export { User };
+
+// Account Schema
+interface IAccount extends mongoose.Document {
+	userId: mongoose.Types.ObjectId;
+	provider: "google" | "credentials";
+	providerId?: string;
+	accessToken: string;
+	refreshToken: string;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+const accountSchema = new Schema<IAccount>(
+	{
+		userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+		provider: { type: String, enum: ["google", "credentials"] },
+		providerId: { type: String },
+		accessToken: { type: String, required: true },
+		refreshToken: { type: String, required: true },
+	},
+	{
+		timestamps: true,
+	}
+);
+
+const Account = mongoose.model<IAccount>("Account", accountSchema);
+export { Account };
+
+// Session Schema
+interface ISession extends mongoose.Document {
+	userId: mongoose.Types.ObjectId;
+	refreshToken?: string;
+	expiresAt: Date;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+const Session = new Schema<ISession>(
+	{
+		userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+		refreshToken: { type: String },
+		expiresAt: { type: Date, required: true },
+	},
+	{
+		timestamps: true,
+	}
+);
+
+const SessionModel = mongoose.model<ISession>("Session", Session);
+export { SessionModel };
+
+// Verification Token Schema
+
+interface IVerificationToken extends mongoose.Document {
+	userId: mongoose.Types.ObjectId;
+	token: string;
+	expiresAt: Date;
+	type: "email_verification" | "passwordReset";
+}
+
+const verificationTokenSchema = new Schema<IVerificationToken>(
+	{
+		userId: { type: Schema.Types.ObjectId, ref: "User" },
+		token: String,
+		expiresAt: Date,
+		type: { type: String, enum: ["emailVerification", "passwordReset"] },
+	},
+	{
+		timestamps: true,
+	}
+);
+
+const VerificationTokenModel = mongoose.model<IVerificationToken>("VerificationToken", verificationTokenSchema);
+export { VerificationTokenModel };

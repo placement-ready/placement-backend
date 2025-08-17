@@ -1,7 +1,5 @@
-import dotenv from "dotenv";
 import { config } from "./config";
-import { connectMongo } from "./utils/connection";
-dotenv.config();
+import { connectMongo } from "./utils/mongooseClient";
 import app from "./server";
 const port = config.server.port;
 const SERVER_START_MSG = `Server running on port: ${port}`;
