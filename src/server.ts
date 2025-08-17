@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { config } from "./config";
+import { authRoutes } from "./routes/auth.routes";
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,9 @@ app.use("/api/health", async (req, res) => {
 app.use(cors(config.cors));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// API routes
+app.use("/api/auth", authRoutes());
 
 // 404 handler for undefined routes
 app.use((req, res, next) => {
