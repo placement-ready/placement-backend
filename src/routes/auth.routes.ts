@@ -5,7 +5,6 @@ import {
 	refreshToken,
 	logout,
 	logoutAll,
-	getProfile,
 	checkEmailExists,
 	checkEmailVerification,
 	createVerificationToken,
@@ -30,7 +29,7 @@ const authRoutes = () => {
 	router.get("/check-email-verification/:email", checkEmailVerification);
 
 	// Protected routes (authentication required)
-	router.get("/profile", authenticateToken, getProfile);
+	router.post("/logout", authenticateToken, logout);
 	router.post("/logout-all", authenticateToken, logoutAll);
 
 	// router.put("/profile", authenticateToken, updateProfile);
