@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { User, SessionModel, VerificationTokenModel } from "../models";
+import { User, Account, SessionModel, VerificationTokenModel } from "../models";
+import Profile from "../models/profile";
 import { JwtUtils } from "../utils/jwt";
 import { sendVerificationEmail } from "../utils/mailClient";
 
 interface RegisterRequest {
-	username?: string;
 	name?: string;
 	email: string;
 	password: string;
@@ -62,6 +62,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 		const { accessToken, refreshToken } = JwtUtils.generateTokenPair(tokenPayload);
 
+		const account = new Account({
+			userId: user._id,
+			provider: "credentials",
+			accessToken,
+			refreshToken,
+		});
+		await account.save();
+
 		// Save refresh token to database
 		const session = new SessionModel({
 			userId: user._id,
@@ -69,6 +77,21 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 			expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
 		});
 		await session.save();
+
+		// Create user profile
+		const profile = new Profile({
+			userId: user._id,
+			name: user.name,
+			email: user.email,
+			image: user.profileImage || "",
+			bio: "",
+			skills: [],
+			experience: [],
+			education: [],
+			projects: [],
+			achievements: [],
+		});
+		await profile.save();
 
 		// Update last login
 		user.lastLoginAt = new Date();
@@ -88,8 +111,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 		res.status(201).json({
 			message: "User registered successfully",
 			user: userResponse,
-			accessToken,
-			refreshToken,
+			tokens: {
+				accessToken: accessToken,
+				refreshToken: refreshToken,
+				expiresIn: 7 * 24 * 60 * 60,
+			},
 		});
 	} catch (error: any) {
 		console.error("Registration error:", error);
@@ -161,15 +187,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			email: user.email,
 			role: user.role,
 			emailVerified: user.emailVerified,
-			profileImage: user.profileImage,
+			image: user.profileImage,
 			lastLoginAt: user.lastLoginAt,
 		};
 
 		res.status(200).json({
 			message: "Login successful",
 			user: userResponse,
-			accessToken,
-			refreshToken,
+			tokens: {
+				accessToken: accessToken,
+				refreshToken: refreshToken,
+				expiresIn: 7 * 24 * 60 * 60,
+			},
 		});
 	} catch (error: any) {
 		console.error("Login error:", error);
@@ -290,39 +319,7 @@ export const logoutAll = async (req: Request, res: Response): Promise<void> => {
 	}
 };
 
-// Get current user profile
-export const getProfile = async (req: Request, res: Response): Promise<void> => {
-	try {
-		if (!req.user) {
-			res.status(401).json({ error: "Authentication required" });
-			return;
-		}
-
-		const user = await User.findById(req.user.userId).select("-password");
-		if (!user) {
-			res.status(404).json({ error: "User not found" });
-			return;
-		}
-
-		res.status(200).json({
-			user: {
-				id: user._id,
-				name: user.name,
-				email: user.email,
-				role: user.role,
-				emailVerified: user.emailVerified,
-				profileImage: user.profileImage,
-				lastLoginAt: user.lastLoginAt,
-				createdAt: (user as any).createdAt,
-				updatedAt: (user as any).updatedAt,
-			},
-		});
-	} catch (error: any) {
-		console.error("Get profile error:", error);
-		res.status(500).json({ error: "Internal server error while fetching profile" });
-	}
-};
-
+// Check if email exists
 export const checkEmailExists = async (req: Request, res: Response) => {
 	try {
 		const email = req.params.email;
@@ -337,6 +334,7 @@ export const checkEmailExists = async (req: Request, res: Response) => {
 	}
 };
 
+// Check if email is verified
 export const checkEmailVerification = async (req: Request, res: Response) => {
 	try {
 		const email = req.params.email;
@@ -351,6 +349,7 @@ export const checkEmailVerification = async (req: Request, res: Response) => {
 	}
 };
 
+// Create a verification token
 export const createVerificationToken = async (req: Request, res: Response) => {
 	try {
 		const email = req.body.email;
@@ -382,9 +381,10 @@ export const createVerificationToken = async (req: Request, res: Response) => {
 	}
 };
 
+// Verify email
 export const verifyEmail = async (req: Request, res: Response) => {
 	try {
-		const { email, code } = req.body.data;
+		const { email, code } = req.body;
 		if (!email || !code) {
 			res.status(400).json({ error: "Email and code are required" });
 			return;
