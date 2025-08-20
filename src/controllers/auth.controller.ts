@@ -6,7 +6,6 @@ import { JwtUtils } from "../utils/jwt";
 import { sendVerificationEmail } from "../utils/mailClient";
 
 interface RegisterRequest {
-	username?: string;
 	name?: string;
 	email: string;
 	password: string;
@@ -112,8 +111,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 		res.status(201).json({
 			message: "User registered successfully",
 			user: userResponse,
-			accessToken,
-			refreshToken,
+			tokens: {
+				accessToken: accessToken,
+				refreshToken: refreshToken,
+				expiresIn: 7 * 24 * 60 * 60,
+			},
 		});
 	} catch (error: any) {
 		console.error("Registration error:", error);
@@ -192,8 +194,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 		res.status(200).json({
 			message: "Login successful",
 			user: userResponse,
-			accessToken,
-			refreshToken,
+			tokens: {
+				accessToken: accessToken,
+				refreshToken: refreshToken,
+				expiresIn: 7 * 24 * 60 * 60,
+			},
 		});
 	} catch (error: any) {
 		console.error("Login error:", error);
@@ -280,7 +285,6 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 export const logout = async (req: Request, res: Response): Promise<void> => {
 	try {
 		const { refreshToken }: RefreshTokenRequest = req.body;
-		console.log("Logout request received:", req.body);
 
 		if (!refreshToken) {
 			res.status(400).json({ error: "Refresh token is required" });
@@ -315,6 +319,7 @@ export const logoutAll = async (req: Request, res: Response): Promise<void> => {
 	}
 };
 
+// Check if email exists
 export const checkEmailExists = async (req: Request, res: Response) => {
 	try {
 		const email = req.params.email;
@@ -329,6 +334,7 @@ export const checkEmailExists = async (req: Request, res: Response) => {
 	}
 };
 
+// Check if email is verified
 export const checkEmailVerification = async (req: Request, res: Response) => {
 	try {
 		const email = req.params.email;
@@ -343,6 +349,7 @@ export const checkEmailVerification = async (req: Request, res: Response) => {
 	}
 };
 
+// Create a verification token
 export const createVerificationToken = async (req: Request, res: Response) => {
 	try {
 		const email = req.body.email;
@@ -374,9 +381,10 @@ export const createVerificationToken = async (req: Request, res: Response) => {
 	}
 };
 
+// Verify email
 export const verifyEmail = async (req: Request, res: Response) => {
 	try {
-		const { email, code } = req.body.data;
+		const { email, code } = req.body;
 		if (!email || !code) {
 			res.status(400).json({ error: "Email and code are required" });
 			return;

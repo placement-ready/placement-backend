@@ -20,7 +20,6 @@ const authRoutes = () => {
 	router.post("/register", ValidationUtils.validateRequest(authValidationRules.register), register);
 	router.post("/login", ValidationUtils.validateRequest(authValidationRules.login), login);
 	router.post("/refresh-token", ValidationUtils.validateRequest(authValidationRules.refreshToken), refreshToken);
-	router.post("/logout", ValidationUtils.validateRequest(authValidationRules.refreshToken), logout);
 	router.post("/verify-email", verifyEmail);
 	router.post("/create-verification-token", createVerificationToken);
 
@@ -31,12 +30,6 @@ const authRoutes = () => {
 	// Protected routes (authentication required)
 	router.post("/logout", authenticateToken, logout);
 	router.post("/logout-all", authenticateToken, logoutAll);
-
-	// router.put("/profile", authenticateToken, updateProfile);
-	// router.post("/forgot-password", forgotPassword);
-	// router.post("/reset-password", resetPassword);
-	// router.get("/verify-email/:token", verifyEmail);
-	// router.post("/change-password", authenticateToken, changePassword);
 
 	return router;
 };
