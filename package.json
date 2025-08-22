@@ -2,9 +2,9 @@
 	"name": "placement-backend",
 	"version": "1.0.0",
 	"description": "Express server for placement hub",
-	"main": "index.js",
+	"main": "src/index.js",
 	"scripts": {
-		"start": "node index.js",
+		"start": "tsx src/index.ts",
 		"dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/index.ts",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
