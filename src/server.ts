@@ -1,4 +1,4 @@
-import express, { Express } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { config } from "./config";
@@ -12,7 +12,7 @@ dotenv.config();
 
 const app: Express = express();
 
-app.use("/api/health", async (req, res) => {
+app.use("/api/health", async (req: Request, res: Response) => {
 	res.status(200).json({ status: "Ok! Server is running" });
 });
 
@@ -27,8 +27,13 @@ app.use("/api/auth", authRoutes());
 app.use("/api/google", googleRoutes());
 app.use("/api/user", userRoutes());
 
+// Root route
+app.get("/", (req: Request, res: Response) => {
+	res.status(200).json({ message: "Welcome to the Placement Hub API" });
+});
+
 // 404 handler for undefined routes
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
 	res.status(404).json({
 		error: {
 			message: "Route not found",

@@ -1,4 +1,7 @@
 {
+	"engines": {
+		"node": "20.x"
+	},
 	"name": "placement-backend",
 	"version": "1.0.0",
 	"description": "Express server for placement hub",
